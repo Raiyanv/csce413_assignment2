@@ -36,7 +36,10 @@ def exec_cmd(command):
 def setup_firewall(protected_port):
     logging.info(f"Firewall Setup: Blocked Port = {protected_port}")
     exec_cmd("iptables -F")
-    exec_cmd("iptables -A INPUT -m conntrack --cstate ESTABLISHED,RELATED -j ACCEPT")
+    exec_cmd("iptables -A INPUT -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT")
+
+        # local host access for testing
+    exec_cmd("iptables -A INPUT -i lo -j ACCEPT")
     
     exec_cmd(f"iptables -A INPUT -p tcp --dport {protected_port} -j DROP")
     
@@ -47,6 +50,8 @@ def open_protected_port(ip, protected_port):
     # TODO: Use iptables/nftables to allow access to protected_port.
     logging.info("Opening firewall for port %s", protected_port)
     exec_cmd(f"iptables -I INPUT 1 -s {ip} -p tcp --dport {protected_port} -j ACCEPT")
+
+
     
     thread = threading.Timer(20, close_protected_port, args=[ip, protected_port])
     thread.start()
@@ -56,8 +61,11 @@ def close_protected_port(ip, protected_port):
     """Close the protected port using firewall rules."""
     # TODO: Remove firewall rules for protected_port.
     logging.info("Closing firewall for port %s", protected_port)
+    try:
+        exec_cmd(f"iptables -D INPUT -s {ip} -p tcp --dport {protected_port} -j ACCEPT")
+    except:
+        logging.warning(f"Could not remove rule for {ip}")
 
-    exec_cmd(f"iptables -D INPUT -s {ip} -p tcp --dport {protected_port} -j ACCEPT")
 
 
 def listen_for_knocks(sequence, window_seconds, protected_port):
@@ -90,7 +98,6 @@ def listen_for_knocks(sequence, window_seconds, protected_port):
         sys.exit(1)
 
     while True:
-        # Use select to wait for data on any of our sockets
         readable, _, _ = select.select(sockets, [], [], 1.0)
 
         # Cleanup: Check for timed-out clients periodically
@@ -180,6 +187,7 @@ def main():
     print(f"Starting Server")
     setup_logging()
 
+
     
 
     try:
@@ -192,6 +200,8 @@ def main():
         listen_for_knocks(sequence, args.window, args.protected_port)
     except KeyboardInterrupt:
         logging.info(f"Shutting Down")
+        exec_cmd("iptables -A INPUT -p tcp --dport 2222 -j DROP")
+
         sys.exit(0)
 
 
