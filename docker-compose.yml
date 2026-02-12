@@ -111,6 +111,9 @@ services:
       - 1.1.1.1
     ports:
       - "2223:2222"
+      - "7000:7000/udp"
+      - "8000:8000/udp"
+      - "9000:9000/udp"
     cap_add:
       - NET_ADMIN
     networks:
