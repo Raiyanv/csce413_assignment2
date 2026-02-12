@@ -26,14 +26,14 @@ def send_knock(target, port, delay, proto='UDP'):
             with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
                 s.settimeout(1.0)
                 # Send empty packet
-                s.sendto(b'', (ip, port))
-                print(f"[+] Knock sent to {target}:{port} (UDP)")
+                s.sendto(b'KNOCK', (ip, int(port)))
+                print(f"[+] UDP Knock sent to {target} {port}")
                 
         elif proto.upper() == 'TCP':
             # Create TCP socket
             with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
                 s.settimeout(1.0)
-                result = s.connect_ex((ip, port))
+                result = s.connect_ex((ip, int(port)))
                 print(f"[+] Knock sent to {target}:{port} (TCP): {result}")
                 
     except socket.gaierror:
