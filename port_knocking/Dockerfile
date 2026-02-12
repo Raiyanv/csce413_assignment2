@@ -16,4 +16,6 @@ RUN mkdir /var/run/sshd && \
 
 COPY knock_server.py knock_client.py ./
 
-CMD ["python3", "knock_server.py"]
+RUN mkdir -p /var/run/sshd
+
+CMD service ssh start && python3 knock_server.py
